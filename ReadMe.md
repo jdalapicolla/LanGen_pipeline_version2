@@ -19,7 +19,7 @@ These scripts perform the following analysis:
 
 <b>7.</b> Selection of environmental data
 
-<b>8.</b> Isolation by Resistance (IBR) using Partial Mantel Tests and Redundancy Analyses (RDA).
+<b>8.</b> Isolation by Resistance (IBR) using Partial Mantel Tests and distance-based Redundancy Analyses (dbRDA).
 
 <b>9.</b> Identification of outlier (adaptive) loci using PCadapt.
 
