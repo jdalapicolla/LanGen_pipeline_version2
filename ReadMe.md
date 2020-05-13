@@ -3,9 +3,7 @@ These suit of scripts were developed based on LanGen_pipeline from @rojaff/LanGe
 
 These scripts perform the following analysis:
 
-<b>1A.</b> SNPs dataset filtering using PCadapt to outlier detection.
-
-<b>1B.</b> SNPs dataset filtering using sNMF to outlier detection.
+<b>1.</b> SNPs dataset filtering using PCadapt, sNMF, and TESS3 to outlier detection.
 
 <b>2.</b> Assessment of population genetic structure.
 
