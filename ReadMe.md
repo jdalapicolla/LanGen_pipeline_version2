@@ -5,7 +5,7 @@ These scripts perform the following analysis:
 
 <b>1.</b> SNPs dataset filtering using PCadapt, sNMF, and TESS3 to outlier detection.
 
-<b>2.</b> Assessment of population genetic structure.
+<b>2.</b> Assessment of population genetic structure using sNMF, DAPC, PCA, TESS3, and Geneland.
 
 <b>3.</b> Estimate genetic diversity and genetic distance inter and intra populations.
 
