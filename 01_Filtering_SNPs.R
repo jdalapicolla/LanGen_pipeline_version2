@@ -11,6 +11,7 @@
 #------------------------------------------------------------------------------
 #                               PRE-ANALYSIS 
 #------------------------------------------------------------------------------
+
 ##1. REFERENCES AND MORE INFORMATION:
 #A. FOR ALL STEPS, PLEASE GO TO: https://github.com/jdalapicolla/ OR https://github.com/rojaff/LanGen_pipeline
 #B. BASED ON PIPELINE FROM LANGEN: https://github.com/rojaff/LanGen_pipeline
@@ -41,7 +42,6 @@ rm(list=ls())
 
 ##6. LOAD THE FILE "functions_LanGen.R" WITH FUNCTIONS TO BE USED ON THIS STEP. MORE INFORMATION ON FUNCTIONS IN NUMBER 2.
 source("functions_LanGen.R")
-
 
 ##7. INSTALL AND LOAD THE PACKAGES
 #A. Install packages automatically
@@ -76,10 +76,11 @@ if("psych" %in% rownames(installed.packages()) == FALSE){install.packages("psych
 } else {print (paste0("'psych' has already been installed in library"))}
 if("tess3r" %in% rownames(installed.packages()) == FALSE){devtools::install_github("bcm-uga/TESS3_encho_sen")
 } else {print (paste0("'tess3r' has already been installed in library"))}
+if("VennDiagram" %in% rownames(installed.packages()) == FALSE){install.packages("VennDiagram")
+} else {print (paste0("'VennDiagram' has already been installed in library"))}
 
 #B. Load multiple packages using the package 'pacman'. If the package is missing "p_load" will download it from CRAN. "" in packages names is not mandatory.
-pacman::p_load(r2vcftools, tidyverse, vcfR, dartR, poppr, adegenet, LEA, pcadapt, qvalue, psych, tess3r)
-
+pacman::p_load(r2vcftools, tidyverse, vcfR, dartR, poppr, adegenet, LEA, pcadapt, qvalue, psych, tess3r, VennDiagram)
 
 ##8. CREATE FOLDERS AND DIRECTORIES TO SAVE THE RESULTS:
 create_dir(c("./adapt_var_mapping/Filtering", "./Results_Metafiles", "./Results_Filters/PCA", "./Results_Filters/PCadapt_FST", "./Results_Filters/sNMF_FST", "./Results_Filters/TESS_FST"))
@@ -447,8 +448,8 @@ missing_values = snps_ind_pc@meta$missing_PC
 length(missing_values)
 
 #C. Convert "VCF" to "GENIND" for both datasets
-genind_adap = convert_vcf2genind(vcf_adaptative)
-genind_neut = convert_vcf2genind(vcf_neutral)
+genind_adap = vcfR2genind(vcf_adaptative)
+genind_neut = vcfR2genind(vcf_neutral)
 
 #D. Remove missing data in both datasets:
 genind_adap_0 = missingno(genind_adap)
@@ -466,7 +467,7 @@ missing_values = missing_values
 #F. Run PCA by dataset
 pca_missing (datasets, names, threshold, missing_values)
 
-#G. Verify in the PCA graphs if there are clusters in your samples, if the number of clusters changed with or without missing data and if any individual in red has changed its position among the clusters. Greater spreading in data with more missing data and SNPs is common. Be careful! Changes could be due to a drop in the number of SNPs. Data with 1,000 SNPs are more robust to keep the genetic structure pattern. If necessary, re-filter and remove unstable individuals or reduce the allowed missing data threshold in Action #6, #7, and #11.
+#G. Verify in the PCA graphs if there are clusters in your samples, if the number of clusters changed with or without missing data and if any individual in red has changed its position among the clusters. Greater spreading in data with more missing data and SNPs is common. Be careful! Changes could be due to a drop in the number of SNPs. Data with 1,000 SNPs are more robust to keep the genetic structure pattern. If necessary, re-filter and remove unstable individuals or reduce the allowed missing data threshold in Action #1.6, #2.1, and #3.1.
 
 
 #------------------------------------------------------------------------------
@@ -515,12 +516,14 @@ gen.pcadapt = read.pcadapt(lfmm_input, type="lfmm")
 pcadapt.test = pcadapt(gen.pcadapt, K=10, ploidy=2)
 #"Cattell's Rule" for interpreting the scree plot (PC to the left of the flat line)
 plot(pcadapt.test, option="screeplot") #2 PCs
-plot(pcadapt.test, option="scores") #PC1 and PC2
-plot(pcadapt.test, option = "scores", i = 3, j = 2) #PC2 and PC3
-plot(pcadapt.test, option = "scores", i = 3, j = 4) #PC3 and PC4
-plot(pcadapt.test, option = "scores", i = 5, j = 4) #PC5 and PC4
-# With PC3, PC4, PC5 the groups have changed. So we can use 2 or 1PC, K = 2 or 1
-plot(pcadapt.test, option = "scores", i = 5, j = 6) #PC5 and PC6
+plot(pcadapt.test, option="scores") #PC1 and PC2 #3 clusters
+plot(pcadapt.test, option = "scores", i = 3, j = 2) #PC2 and PC3 # 4 clusters
+plot(pcadapt.test, option = "scores", i = 3, j = 4) #PC3 and PC4 # 1-2 clsuters
+plot(pcadapt.test, option = "scores", i = 5, j = 4) #PC5 and PC4 # 1-2 clsuters
+plot(pcadapt.test, option = "scores", i = 5, j = 6) #PC5 and PC6 # 2 clusters
+#With PC2 is reached the maximum number of clusters #4
+#With PC3, PC4, PC5 the groups have changed to 1-2.
+#So we can use 2 PCs, K = 2.
 
 #B. Save figure as pdf files:
 pdf(paste0("./Results_Filters/PCadapt_FST/", project_name, "_screenplot.pdf"), onefile = T)
@@ -610,6 +613,7 @@ length(outliers) #It will be eliminated 9 SNPs
 #B. Selecting candidate outlier 
 outlier_snps = Subset(snps, sites=outliers)
 outlier_snps@site_id ##These are all the Outlier SNPs.
+A_pcadapt = outlier_snps@site_id
 length(outlier_snps@site_id)
 
 #C. Exclude candidate outlier
@@ -706,7 +710,7 @@ PlotK(project1) #5
 PlotK(project2) #5
 PlotK(project3) #5
 PlotK(project4) #4
-PlotK(project5) #5
+PlotK(project5) #4
 PlotK(project6) #5
 #another way to view the results
 #plot(project1, lwd = 5, col = "red", pch=1)
@@ -755,7 +759,7 @@ FST = fst(project, run, optimal_K) # you need at least 2 populations for a popul
 
 #B. Compute the GIF - genomic inflation factor
 lambda <- GIF(project, run, optimal_K, fst.values=FST)
-lambda
+lambda #5.622443
 
 #C. Compute adjusted p-values from the combined z-scores and plot histogram of p-values
 n = dim(Q(project, run, optimal_K))[1]
@@ -764,7 +768,7 @@ adj.p.values = pchisq(z.scores^2/lambda, df = optimal_K-1, lower = FALSE)
 hist(adj.p.values, col = "red")
 
 #D. Test different lambda values and plot histogram of p-values
-adj.p.values = pchisq(z.scores^2/3.5, df = optimal_K-1, lower = FALSE) ## it is the best, but is still strange #try best value until close to one, uniform distribution with a peak at 0, and max 10% of snps 
+adj.p.values = pchisq(z.scores^2/3, df = optimal_K-1, lower = FALSE) ## it is the best, but is still strange #try best value until close to one, uniform distribution with a peak at 0, and max 10% of snps 
 hist(adj.p.values, col = "green")
 C_fst <- candidates(alpha=0.1, adj.p.values)
 ManPlot(adj.p.values, C_fst,"Fst")
@@ -785,6 +789,7 @@ dev.off()
 #H. Exclude candidate FST outlier
 snps_fil_ldF_candidate <- Subset(snps, sites=C_fst)
 snps_fil_ldF_candidate@site_id ## These are all the candidate SNPs
+B_snmf = snps_fil_ldF_candidate@site_id
 Chrom(snps_fil_ldF_candidate)
 
 candidates_fst <- snps_fil_ldF_candidate@site_id
@@ -798,7 +803,7 @@ length(snps@site_id)-length(C_fst)
 length(snps_neutral@site_id)
 
 neutral_after_fst_sNMF = capture.output(VCFsummary(snps_neutral))
-neutral_after_fst_sNMF #277 individuals and 4941 SNPs.
+neutral_after_fst_sNMF #277 individuals and 4798 SNPs.
 
 #I. Save the vcf
 Save(snps_neutral, paste0("vcf/", project_name, "_filtered_neutral_sNMF.vcf"))
@@ -830,93 +835,71 @@ plot(coordinates, pch = 19, cex = .5, xlab = "Longitude", ylab = "Latitude")
 
 
 ###7.2. RUNNING THE TESS3R FUNCTION:
-#A. Costumize values of lambda
-lambda_values = c(0, 0.25, 0.5, 0.75, 1, 1.25, 1.5)
+#A. Costumize values for the run
+lambda_values = c(0, 0.25, 0.5, 0.75, 1, 1.25, 1.5) #test lambda values around 1.
+K = c(1:10) # set the number of K to be tested
+replications = 5 # number of replication in each K
+ploidy = 2 # species ploidy
+CPU = 4 #Number of cores for run in parallel
+mask = 0.05 #porportion of masked values
 
 #B.Run a loop for all alpha values
 set.seed(13)
 for (i in lambda_values){
-    tess3.ls = tess3(genotypes, coord = coordinates, K = 1:10, mask = 0.05, lambda = i,
-                   method = "projected.ls", max.iteration = 5000, rep = 5,
-                   ploidy = 2, openMP.core.num = 4)
+    tess3.ls = tess3(genotypes, coord = coordinates, K = K, mask = mask, lambda = i,
+                   method = "projected.ls", max.iteration = 5000, rep = replications,
+                   ploidy = ploidy, openMP.core.num = CPU)
     save(tess3.ls, file = paste0("./Results_Filters/TESS_FST/Tess3ls_Lambda_", i,"_", project_name, ".RData"))
-    assign(paste0("TESS3_Lambda_", i), tess3.ls)
-    pdf(paste0("./Results_Filters/TESS_FST/TESS3_PlotK_CrossValidation_Lambda_", i, ".pdf"), onefile =F)
-    plot.new()
-    plot(tess3.ls, pch = 19, col = "blue", type="b",lwd=2,
-         crossvalid = T, crossentropy = T,
-         xlab = "Number of ancestral populations", cex.lab=1.5,
-         ylab = "Cross-validation score")
-    dev.off()
+  
 }
 
-#C. Plot results for all lambda values:
-#Lambda 0: k = 6
-plot(TESS3_Lambda_0, pch = 19, col = "blue", type="b",lwd=2,
-     crossvalid = T, crossentropy = T,
-     xlab = "Number of ancestral populations", cex.lab=1.5,
-     ylab = "Cross-validation score")
+#C. Choose the lambda with the minimum cross-validation value:
+#create a matrix to save results
+cross_value = matrix(NA, max(K)*length(lambda_values), 3)
+colnames(cross_value) = c("K", "Lambda", "Crossvalidation")
 
-#Lambda 0.25: k = 5
-plot(TESS3_Lambda_0.25, pch = 19, col = "blue", type="b",lwd=2,
-     crossvalid = T, crossentropy = T,
-     xlab = "Number of ancestral populations", cex.lab=1.5,
-     ylab = "Cross-validation score")
-
-#Lambda 0.5: k = 5
-plot(TESS3_Lambda_0.5, pch = 19, col = "blue", type="b",lwd=2,
-     crossvalid = T, crossentropy = T,
-     xlab = "Number of ancestral populations", cex.lab=1.5,
-     ylab = "Cross-validation score")
-
-#Lambda 0.75: k = 5
-plot(TESS3_Lambda_0.75, pch = 19, col = "blue", type="b",lwd=2,
-     crossvalid = T, crossentropy = T,
-     xlab = "Number of ancestral populations", cex.lab=1.5,
-     ylab = "Cross-validation score")
-
-#Lambda 1: k = 4
-plot(TESS3_Lambda_1, pch = 19, col = "blue", type="b",lwd=2,
-     crossvalid = T, crossentropy = T,
-     xlab = "Number of ancestral populations", cex.lab=1.5,
-     ylab = "Cross-validation score")
-
-#Lambda 1.25: k = 7
-plot(TESS3_Lambda_1.25, pch = 19, col = "blue", type="b",lwd=2,
-     crossvalid = T, crossentropy = T,
-     xlab = "Number of ancestral populations", cex.lab=1.5,
-     ylab = "Cross-validation score")
-
-#Lambda 1.5: k = 5
-plot(TESS3_Lambda_1.5, pch = 19, col = "blue", type="b",lwd=2,
-     crossvalid = T, crossentropy = T,
-     xlab = "Number of ancestral populations", cex.lab=1.5,
-     ylab = "Cross-validation score")
+loop = 0 #Always set loop = 0.
+for (i in lambda_values){
+  load(file = paste0("./Results_Filters/TESS_FST/Tess3ls_Lambda_", i,"_", project_name, ".RData"))
+    for (j in 1:max(K)){
+      loop=loop+1
+      res = Gettess3res(tess3.ls, K=j)
+      cross_value[loop,1] = j
+      cross_value[loop,2] = i
+      cross_value[loop,3] = min(res$crossvalid.crossentropy)}
+  }
+#save as csv
+write.csv(cross_value,paste0("./Results_Filters/TESS_FST/Tess3ls_Crossvalidation_values_", project_name, ".csv"))
+#choose best lambda
+lambda_tess = as.vector(cross_value[cross_value[,3] == min(cross_value[,3]), ][2])
+lambda_tess
 
 #D. Choose best K:
+#load the best lambda project:
+load(file = paste0("./Results_Filters/TESS_FST/Tess3ls_Lambda_", lambda_tess,"_", project_name, ".RData"))
+#plot results
+pdf(paste0("./Results_Filters/TESS_FST/TESS3_PlotK_CrossValidation_Lambda_", lambda_tess, ".pdf"), onefile =F)
+plot.new()
+plot(tess3.ls, pch = 19, col = "blue", type="b",lwd=2,
+     crossvalid = T, crossentropy = T,
+     xlab = "Number of ancestral populations", cex.lab=1.5,
+     ylab = "Cross-validation score")
+dev.off()
+#best K
 optimal_K = 5
 #ATTENTION, if your dataset is K = 1 force a K = 2 to be able to filter SNPs with FST outliers.
 
-min(TESS3_Lambda_0[[optimal_K]]$crossvalid.crossentropy) #0.3630269
-min(TESS3_Lambda_0.25[[optimal_K]]$crossvalid.crossentropy) #0.3599267
-min(TESS3_Lambda_0.75[[optimal_K]]$crossvalid.crossentropy) #0.3626061
-min(TESS3_Lambda_0.5[[optimal_K]]$crossvalid.crossentropy) #0.3619763
-min(TESS3_Lambda_1[[optimal_K]]$crossvalid.crossentropy) #0.3598105
-min(TESS3_Lambda_1.25[[optimal_K]]$crossvalid.crossentropy) #0.3625805
-min(TESS3_Lambda_1.5[[optimal_K]]$crossvalid.crossentropy) #0.3615824
-
-#Best = Lambda_1
 
 ###7.3. FST OUTLIER DETECTION
-#A. Use the best lambda project to retrieve results
-res = Gettess3res(TESS3_Lambda_1, K=5)
+#A. Compute results for the best run
+res = Gettess3res(tess3.ls, K=optimal_K)
 
-#B. Compute the FST statistics using best run
-FST = res$Fst 
+#B. Select FST statistics for the best run
+FST = res$Fst
 
 #C. Compute the GIF - genomic inflation factor
 lambda = res$gif
-lambda # 3.610677
+lambda # 3.750238
 
 #D. Compute adjusted p-values from the combined z-scores and plot histogram of p-values
 n = dim(Q(project, run, optimal_K))[1]
@@ -935,7 +918,7 @@ pdf("./Results_Filters/TESS_FST/TESS_FST_Outliers_adj_p_values.pdf", onefile = T
 hist(adj.p.values, col = "green")
 dev.off()
 
-#G. Candidate loci for FDR control: Benjamini-Hochberg at level q 10%
+#G. Candidate loci for FDR control: Benjamini-Hochberg at level 10%
 C_fst <- candidates(alpha=0.1, adj.p.values)
 
 #H. save the Manhatan plot
@@ -946,6 +929,7 @@ dev.off()
 #I. Exclude candidate FST outlier
 snps_fil_ldF_candidate <- Subset(snps, sites=C_fst)
 snps_fil_ldF_candidate@site_id ## These are all the candidate SNPs
+C_TESS = snps_fil_ldF_candidate@site_id
 Chrom(snps_fil_ldF_candidate)
 
 candidates_fst <- snps_fil_ldF_candidate@site_id
@@ -953,16 +937,17 @@ All_snp <- snps@site_id
 N_snp <- All_snp[!(All_snp %in% candidates_fst)] ###Exclude all candidate loci
 
 snps_neutral <- Subset(snps, sites=N_snp)
-VCFsummary(snps_neutral) #277 individuals and 4936 SNPs.
+VCFsummary(snps_neutral) #277 individuals and 4770 SNPs.
 length(N_snp)
 length(snps@site_id)-length(C_fst) 
 length(snps_neutral@site_id)
 
 neutral_after_fst_TESS = capture.output(VCFsummary(snps_neutral))
-neutral_after_fst_TESS #277 individuals and 4936 SNPs.
+neutral_after_fst_TESS #277 individuals and 4770 SNPs.
 
 #J. Save the vcf
 Save(snps_neutral, paste0("vcf/", project_name, "_filtered_neutral_TESS.vcf"))
+
 
 
 #------------------------------------------------------------------------------
@@ -989,10 +974,22 @@ as.data.frame(results_snps)
 #E. Save result as .csv
 write.csv(as.data.frame(results_snps), paste0("./Results_Metafiles/Results_SNPs_datasets_", project_name, ".csv"))
 
-###8.2. CHOOSE BEST WAY TO FILTER LOCI OUTLIERS:
+###8.4. CREATING A VENN DIAGRAM HOOSE BEST WAY TO FILTER LOCI OUTLIERS:
+## Creating a Venn Diagram and save it as pdf
+pdf(paste0("./Results_Filters/VennDiagram_FST-Outliers.pdf"), onefile = T)
+plot.new()
+grid.draw(w1 <- venn.diagram(list(PCadapt=A_pcadapt, sNMF=B_snmf, TESS=C_TESS),
+                             lty = c("blank", "blank", "blank"),
+                             fill = c("red", "blue", "yellow"),
+                             alpha = c(0.5, 0.5, 0.5), cat.cex = 1.2, cex= 1.5,  cat.pos = 0, 
+                             filename=NULL ))
+
+dev.off()
+
+###8.3. CHOOSE BEST WAY TO FILTER LOCI OUTLIERS:
 #A. Tess3 in my example:
 snps = vcfLink(paste0("vcf/", project_name,"_filtered_neutral_TESS.vcf"), overwriteID=T)
-VCFsummary(snps) ##277 individuals and 6602 SNPs.
+VCFsummary(snps) ##277 individuals and 4770 SNPs.
 
 #B. Save as final VCF:
 Save(snps, paste0("vcf/", project_name, "_filtered_neutral.vcf"))
