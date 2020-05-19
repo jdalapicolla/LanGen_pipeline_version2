@@ -5,13 +5,13 @@ These scripts perform the following analysis:
 
 <b>1.</b> SNPs dataset filtering using PCadapt, sNMF, and TESS3 to outlier detection.
 
-<b>2.</b> Assessment of population genetic structure using sNMF, DAPC, PCA, TESS3, and Geneland.
+<b>2.</b> Assessment of population genetic structure using sNMF, DAPC, TESS3, and PCA.
 
-<b>3.</b> Estimate genetic diversity and genetic distance inter and intra populations.
+<b>3.</b> Creating maps for ancestry coefficients from step 2.
 
-<b>4.</b> Assessment of fine-scale spatial genetic structure using LOESS and Spatial Principal Components (sPCA).
+<b>4.</b> Estimate genetic diversity and genetic distance inter and intra populations.
 
-<b>5.</b> Creating maps for ilustrate ancestry populations from step 2.
+<b>5.</b> Assessment of fine-scale spatial genetic structure using LOESS and Spatial Principal Components (sPCA).
 
 <b>6.</b> Isolation by Distance (IBD) using Mantel Tests and Procrustes Analysis.
 
