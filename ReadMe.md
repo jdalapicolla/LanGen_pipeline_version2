@@ -9,7 +9,7 @@ These scripts perform the following analysis:
 
 <b>3.</b> Creating maps for ancestry coefficients from step 2.
 
-<b>4.</b> Estimate genetic diversity and genetic distance inter and intra populations.
+<b>4.</b> Estimate Tajima's D, genetic diversity and genetic distance inter and intra populations.
 
 <b>5.</b> Assessment of fine-scale spatial genetic structure using LOESS and Spatial Principal Components (sPCA).
 
