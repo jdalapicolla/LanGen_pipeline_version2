@@ -91,7 +91,7 @@ project_name = "pilocarpus"
 
 #B. Choose the number of clusters according to step 2. In my case TESS3. 
 
-###2.1. LOAD VCF FILES AND GEOGRAPHICAL INFORMATIONS: 
+###1.2. LOAD VCF FILES AND GEOGRAPHICAL INFORMATIONS: 
 #A. Load neutral .vcf file with geographical information and genetic clusters ID:
 snps_neutral = vcfLink(paste0("vcf/", project_name, "_filtered_neutral_LEA_DAPC_TESS.vcf"), overwriteID=T)
 VCFsummary(snps_neutral) #277 individuals and 6217 SNPs.
@@ -106,6 +106,27 @@ for (i in 1:length(unique(snps_neutral@meta$PopID_tess))){
   pop = which(snps_neutral@meta$PopID_tess == i)
   assign(paste0("pop_TESS_", i), pop)
 }
+
+
+###1.3. VERIFY THE MEAN COVERAGE DEPTH: 
+#A. Mean coverage in all dataset
+site.depth = Query(snps_neutral, type="site-mean-depth")
+summary(site.depth$MEAN_DEPTH) #Mean = 83.81 / Median = 71.49
+hist(site.depth$MEAN_DEPTH, breaks=30)
+
+#B. Mean coverage by individual
+coverage_ind = c()
+for (p in 1:length(snps_neutral@sample_id)){
+beta = Query(Subset(snps_neutral, samples = p), type="site-mean-depth")
+coverage_ind[p] = mean(beta$MEAN_DEPTH, na.rm = T)}
+#verify
+coverage_ind
+#save as metafile
+snps_neutral@meta$coverage = coverage_ind
+
+write.csv(coverage_ind, file=paste0("Results_Metafiles/coverage_", project_name, "_by_individual.csv"))
+
+
 
 
 #------------------------------------------------------------------------------
@@ -136,6 +157,69 @@ for (j in 1:optimal_K){
 cluster_div = GenDiv(pops[[j]])
 write.csv(cluster_div, file=paste0("Results_Diversity/Diversity_Cluster_neutral_", project_name, "_POP", j, "_", method, ".csv"))
 }
+
+####2.2. COMPARE GENETIC DIVERSITY BETWEEN POPULATION OR SPECIES:
+#A. Estimated diversity by individual in each population
+ind_ste1 = GenDiv_IND(pop_1)
+ind_ste1$SPE = c("STE_1")
+ind_ste2 = GenDiv_IND(pop_2)
+ind_ste2$SPE = c("STE_2")
+ind_ste3 = GenDiv_IND(pop_3)
+ind_ste3$SPE = c("STE_3")
+ind_ste4 = GenDiv_IND(pop_4)
+ind_ste3$SPE = c("STE_4")
+
+#B.Create a data frame to analysis
+table_diversity = rbind(ind_ste1,ind_ste2,ind_ste3,,ind_ste4)
+variaveis = table_diversity[, 1:4]
+species = as.factor(table_diversity[ ,5])
+plan_anova = data.frame(species,variaveis)
+classes = as.factor(plan_anova$species)
+
+#C. Calculate ANOVA
+sink(paste0("Results_Diversity/Ind_Diversity_By_Population_ANOVA_TUKEYS_", project_name, ".doc"))
+for(i in 2:ncol(plan_anova)){
+  column<- names (plan_anova[i])
+  result_anova<- aov(plan_anova[,i]~classes, data= plan_anova)
+  result_anova2<- summary(aov(plan_anova[,i]~classes, data= plan_anova))
+  tk<- TukeyHSD (result_anova)
+  print(column)
+  print(result_anova2)
+  print(tk)
+}
+sink()
+
+#D. Calculate general p-value
+sink(paste0("Results_Diversity/Ind_Diversity_By_Population_ANOVA_p-values_", project_name, ".doc"))
+for(i in 2:ncol(plan_anova)){
+  column<- names (plan_anova[i])
+  result_anova<- summary(aov(plan_anova[,i]~classes, data= plan_anova))[[1]][["Pr(>F)"]]
+  print(column)
+  print(result_anova) 
+}
+sink()
+
+
+#### 2.3. BOXPLOT TO COMPARE VALUES AMONG SPECIES:
+#A. Reshape the dataframe:
+dat.m = melt(plan_anova,id.vars="species")
+
+#B. Create a graph
+boxplot_diversity = ggplot(dat.m)+
+  geom_boxplot(aes(x=species, y=value))+
+  facet_wrap(~variable, scales="free")+
+  geom_point(aes(species, value), size = 1, pch=19)+
+  theme_bw()+
+  labs(y= NULL, x = NULL)
+
+#C.Verify
+boxplot_diversity
+
+#D. Save as pdf:
+pdf(paste0("Results_Diversity/Diversity_Genetic_Boxplot_Populations_", project_name, ".csv"))
+boxplot_diversity
+dev.off()
+
 
 
 #------------------------------------------------------------------------------
@@ -352,53 +436,59 @@ load("./Results_TajimaD/tajd_p4.Rdata")
 
 
 ###6.5. PLOT OBSERVED TAJIMA'D AGAINST THE NULL DISTRIBUTION
-## The null distribution (histogram) is shown next to the observed Tajima's D value (red line)
-
-#A. Create the theme for ggplot graphs
-theme_pca = theme(legend.text = element_text(face = "italic",
-                                             colour="black",
-                                             family = "Helvetica",
-                                             size = rel(1)), 
-                  axis.title = element_text(colour="black",
-                                            family = "Helvetica",
-                                            size = rel(1.2)), 
-                  axis.text = element_text(family = "Helvetica",
-                                           colour = "black",
-                                           size = rel(1)), 
-                  axis.line = element_line(size = 1,colour = "black"), 
-                  axis.ticks = element_line(colour="black",size = rel(1)),
-                  
-                  panel.grid.minor = element_blank(), 
-                  panel.background = element_rect(fill = "whitesmoke"), 
-                  panel.grid.major = element_line(colour="black",size = rel(0.2), linetype = "dotted"),
-                  legend.key = element_blank(), 
-                  legend.title = element_text(colour = "black",
-                                              size = rel(1.5),
-                                              family = "Helvetica"), 
-                  plot.title = element_text(colour = "black",
-                                            face = "bold",
-                                            hjust = 0.5, #alingment
-                                            size = rel(1.7),
-                                            family = "Helvetica"))
+#A.The null distribution (histogram) is shown next to the observed Tajima's D value (red line)
 
 #B.POP1
 pdf(paste0("./Results_TajimaD/TajimaD_POP1.pdf"), onefile = F)
-ggplot(data.frame(x=tajd_p1$simulations$'Null, bias-corrected')) + geom_histogram(aes(x=x), binwidth=0.01) + geom_vline(xintercept=mean(tajd_p1$simulations$'Bootstrap, bias-corrected'), lty=2, col="red") + geom_vline(xintercept=0) + theme_pca + ggtitle("Simulations for POP1") +labs(y= "Frequency", x = "Tajima's D") 
+ggplot(data.frame(x=tajd_p1$simulations$'Null, bias-corrected')) + geom_histogram(aes(x=x), binwidth=0.01) + geom_vline(xintercept=mean(tajd_p1$simulations$'Bootstrap, bias-corrected'), lty=2, col="red") + geom_vline(xintercept=0) + theme_bw() + ggtitle("Simulations for POP1") +labs(y= "Frequency", x = "Tajima's D") 
 dev.off()
 
 #C.POP2
 pdf(paste0("./Results_TajimaD/TajimaD_POP2.pdf"), onefile = F)
-ggplot(data.frame(x=tajd_p2$simulations$'Null, bias-corrected')) + geom_histogram(aes(x=x), binwidth=0.01) + geom_vline(xintercept=mean(tajd_p2$simulations$'Bootstrap, bias-corrected'), lty=2, col="red") + geom_vline(xintercept=0) + theme_pca + ggtitle("Simulations for POP2") +labs(y= "Frequency", x = "Tajima's D") 
+ggplot(data.frame(x=tajd_p2$simulations$'Null, bias-corrected')) + geom_histogram(aes(x=x), binwidth=0.01) + geom_vline(xintercept=mean(tajd_p2$simulations$'Bootstrap, bias-corrected'), lty=2, col="red") + geom_vline(xintercept=0) + theme_bw() + ggtitle("Simulations for POP2") +labs(y= "Frequency", x = "Tajima's D") 
 dev.off()
 
 #D.POP3
 pdf(paste0("./Results_TajimaD/TajimaD_POP3.pdf"), onefile = F)
-ggplot(data.frame(x=tajd_p3$simulations$'Null, bias-corrected')) + geom_histogram(aes(x=x), binwidth=0.01) + geom_vline(xintercept=mean(tajd_p3$simulations$'Bootstrap, bias-corrected'), lty=2, col="red") + geom_vline(xintercept=0) + theme_pca + ggtitle("Simulations for POP3") +labs(y= "Frequency", x = "Tajima's D") 
+ggplot(data.frame(x=tajd_p3$simulations$'Null, bias-corrected')) + geom_histogram(aes(x=x), binwidth=0.01) + geom_vline(xintercept=mean(tajd_p3$simulations$'Bootstrap, bias-corrected'), lty=2, col="red") + geom_vline(xintercept=0) + theme_bw() + ggtitle("Simulations for POP3") +labs(y= "Frequency", x = "Tajima's D") 
 dev.off()
 
 #E.POP4
 pdf(paste0("./Results_TajimaD/TajimaD_POP4.pdf"), onefile = F)
-ggplot(data.frame(x=tajd_p4$simulations$'Null, bias-corrected')) + geom_histogram(aes(x=x), binwidth=0.01) + geom_vline(xintercept=mean(tajd_p4$simulations$'Bootstrap, bias-corrected'), lty=2, col="red") + geom_vline(xintercept=0) + theme_pca + ggtitle("Simulations for POP4") +labs(y= "Frequency", x = "Tajima's D") 
+ggplot(data.frame(x=tajd_p4$simulations$'Null, bias-corrected')) + geom_histogram(aes(x=x), binwidth=0.01) + geom_vline(xintercept=mean(tajd_p4$simulations$'Bootstrap, bias-corrected'), lty=2, col="red") + geom_vline(xintercept=0) + theme_bw() + ggtitle("Simulations for POP4") +labs(y= "Frequency", x = "Tajima's D") 
 dev.off()
+
+
+#------------------------------------------------------------------------------
+#               7. Converting VCF to Genepop to run NeEstimator 2.14
+#------------------------------------------------------------------------------
+###5.1. LOAD VCF
+snpsR = read.vcfR(paste0("vcf/", project_name, "_filtered_neutral_LEA_DAPC_TESS.vcf"), verbose = T)
+
+
+###5.2. DEFINING POPULATIONS USING THE  VCF METAFILE:
+snps = vcfLink(paste0("vcf/", project_name, "_filtered_neutral_LEA_DAPC_TESS.vcf"), overwriteID=T)
+VCFsummary(snps)
+population = as.factor(snps@meta$PopID_tess)
+
+
+##5.3. CONVERTING FILES:
+#A. VCF to Genind
+snps_genind = vcfR2genind(snpsR)
+class(snps_genind)
+
+#B. Adding strata (pops) into Genind
+snps_genind@pop = population
+
+#C. Converting Genind to Gtypes
+snps_gtypes = genind2gtypes(snps_genind)
+class(snps_gtypes)
+
+#D. Converting Gtypes to GENEPOP to run in NeEstimator and save it:
+genepopWrite(snps_gtypes, "pilocarpus_genepop.txt")
+
+#E. Load this file in NeEstimator to run Ne analyses.
+
+##END
 
 ##END
