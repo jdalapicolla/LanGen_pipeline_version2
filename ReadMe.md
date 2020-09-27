@@ -1,7 +1,9 @@
-# Landscape Genomics Pipeline - Version 2 
+### LANDSCAPE GENOMICS PIPELINE IN R ###
+### PART 1 - GENETIC STRUCTURE AND GENETIC DIVERSITY ###
+
 These suit of scripts were developed based on LanGen_pipeline from @rojaff/LanGen_pipeline
 
-These scripts perform the following analysis:
+Scripts in R for different analyses of Landscape Genomics using SNPS, VCF, or Genind objects. These scripts perform the following steps:
 
 <b>1.</b> SNPs dataset filtering using PCadapt, sNMF, and TESS3 to outlier detection.
 
@@ -11,29 +13,8 @@ These scripts perform the following analysis:
 
 <b>4.</b> Estimate Tajima's D, genetic diversity and genetic distance inter and intra populations.
 
-<b>5.</b> Assessment of fine-scale spatial genetic structure using LOESS.
-
-<b>6.</b> Assessment of fine-scale spatial genetic structure using Spatial Principal Components (sPCA).
-
-<b>7.</b> Isolation by Distance (IBD) using Mantel Tests.
-
-<b>8.</b> Isolation by Distance (IBD) using Procrustes Analysis.
-
-<b>9.</b> Selection of environmental data
-
-<b>10.</b> Isolation by Resistance (IBR) using Partial Mantel Tests and distance-based Redundancy Analyses (dbRDA).
-
-<b>11.</b> Identification of outlier (adaptive) loci using PCadapt.
-
-<b>12.</b> Identification of genotype-environment associations (GEA) using Redundancy Analyses (RDA) & Mahalanobis distances.
-
-<b>13.</b> Identification of genotype-environment associations (GEA) using Latent Factor Mixed Models (LFMM2).
-
-<b>14.</b> Plotting detections with a Venn Diagram.
-
-<b>15.</b> Visual assessment of genotype-environment associations using Redundancy Analyses (RDA) on the candidate loci.
-
-<b>16.</b> Mapping adaptive genetic variation using Spatial Principal Components (sPCA).
-
-<b>17.</b> Predicting adaptive genotypes from RDA models and environmental data.
+## PART 1 - GENETIC STRUCTURE AND GENETIC DIVERSITY https://github.com/jdalapicolla/LanGen_pipeline_version2
+## PART 2 - ISOLATION BY DISTANCE AND FINE-SCALE SPATIAL GENETIC STRUCTURE https://github.com/jdalapicolla/IBD_models.R
+## PART 3 - ISOLATION BY RESISTANCE USING MLPE MODELS - https://github.com/jdalapicolla/MLPE.R
+## PART 4 - LOCAL ADAPTATION ANALYSES - IDENTIFICATION OF CANDIDATES LOCI UNDER SELECTION
     
