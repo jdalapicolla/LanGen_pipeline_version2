@@ -1,7 +1,7 @@
 ### LANDSCAPE GENOMICS PIPELINE IN R ###
 ### PART 1 - GENETIC STRUCTURE AND GENETIC DIVERSITY ###
 
-These suit of scripts were developed based on LanGen_pipeline from @rojaff/LanGen_pipeline
+This suit of scripts were developed based on LanGen_pipeline from @rojaff/LanGen_pipeline
 
 Scripts in R for different analyses of Landscape Genomics using SNPS, VCF, or Genind objects. These scripts perform the following steps:
 
