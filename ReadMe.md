@@ -1,4 +1,15 @@
 ### LANDSCAPE GENOMICS PIPELINE IN R ###
+ 
+REFERENCES AND MORE INFORMATION:
+
+#A. BASED ON PIPELINE FROM LANGEN: https://github.com/rojaff/LanGen_pipeline
+ 
+#B. THIS PIPELINE WAS DESIGNED IN UBUNTU 20.04 LTS, USING RSTUDIO 1.4.1717 AND R 4.1.0
+
+#C. Script prepared by Carolina S. Carvalho, Jeronymo Dalapicolla, Luciana C. Resende-Moreira, Jamille C. Veiga, and Rodolfo Jaffé
+
+
+
 ### PART 1 - GENETIC STRUCTURE AND GENETIC DIVERSITY ###
 
 This suit of scripts were developed based on LanGen_pipeline from @rojaff/LanGen_pipeline
