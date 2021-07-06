@@ -20,9 +20,7 @@ Scripts in R for different analyses of Landscape Genomics using SNPS, VCF, or Ge
 
 <b>2.</b> Assessment of population genetic structure using sNMF, DAPC, TESS3, and PCA.
 
-<b>3.</b> Creating maps for ancestry coefficients from step 2.
-
-<b>4.</b> Estimate Tajima's D, genetic diversity and genetic distance inter and intra populations, and preparing the input for NeEstimator (Effective Population Sizes).
+<b>3.</b> Estimate Tajima's D, genetic diversity and genetic distance inter and intra populations, and preparing the input for NeEstimator (Effective Population Sizes).
 
 ## PART 1 - GENETIC STRUCTURE AND GENETIC DIVERSITY https://github.com/jdalapicolla/LanGen_pipeline_version2
 ## PART 2 - ISOLATION BY DISTANCE AND FINE-SCALE SPATIAL GENETIC STRUCTURE https://github.com/jdalapicolla/IBD_models.R
