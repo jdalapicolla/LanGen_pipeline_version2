@@ -1,252 +1,369 @@
-###############################################################################
+
 ####################### VALE INSTITUTE OF TECHNOLOGY ##########################
-###############################################################################
 
 ######################## LANDSCAPE GENOMICS TUTORIAL ##########################
-###########   STEP 04: GENETIC DIVERSITY, DISTANCE, AND TAJIMA D   ############
-
-### Script prepared by Carolina S. Carvalho, Jeronymo Dalapicolla, Luciana C. Resende-Moreira, Jamille C. Veiga, and Rodolfo Jaffé ###
+########### STEP 03: GENETIC DIVERSITY, DISTANCE, AND TAJIMA D  ###############
 
 
-#------------------------------------------------------------------------------
-#                               PRE-ANALYSIS 
-#------------------------------------------------------------------------------
-##1. REFERENCES AND MORE INFORMATION:
-#A. FOR ALL STEPS, PLEASE GO TO: https://github.com/jdalapicolla/ OR https://github.com/rojaff/LanGen_pipeline
-#B. BASED ON PIPELINE FROM LANGEN: https://github.com/rojaff/LanGen_pipeline
-#C. THIS TUTORIAL IS ORGANIZED IN DIFFERENT "Steps" AND INSIDE EACH STEP THERE ARE "Actions" DENOTED BY NUMBERS (#1) AND INSIDE EACH ACTION COULD EXIST "Operations" INDICATED BY LETTES (#A.)
-#D. THIS PIPELINE WAS DESIGNED IN UBUNTU 18.04 LTS, USING RSTUDIO 1.2.1335 AND R 3.6.3
 
 
-##2. INPUTS FOR THIS STEP:
-#A. THE FILE ".VCF" CLEANED AFTER FILTERING, STEP 1.
+### Script prepared by Jeronymo Dalapicolla, Carolina S. Carvalho, Luciana C. Resende-Moreira, Jamille C. Veiga, and Rodolfo Jaffé ###
+
+
+
+
+#### PRE-ANALYSIS #### 
+
+##1. INPUTS FOR THIS TUTORIAL ----
+#A. THE FILE ".VCF" CLEANED AFTER FILTERING AND WITH DELIMITED GENETIC CLUSTERS, STEP 2.
+
 #B. THE FILE "functions_LanGen.R" WITH FUNCTIONS DESIGNED FOR THIS PIPELINE IN THE WORKING DIRECTORY. YOU CAN DOWNLOAD IN  https://github.com/jdalapicolla/ OR https://github.com/rojaff/LanGen_pipeline
 
 
-##3. GOALS FOR THIS STEP:
+
+##2. GOALS FOR THIS STEP:
 #A. CALCULATE GENETIC DIVERSITY INTRA AND INTER POPULATIONS/CLUSTERS
-#A. CALCULATE GENETIC DISTANCE AMONG POPULATIONS/CLUSTERS AND INDIVIDUALS
-#B. CALCULATE TAJIMA D FOR POPULATION EXPANSION
+#B. CALCULATE GENETIC DISTANCE AMONG POPULATIONS/CLUSTERS AND INDIVIDUALS
+#C. CALCULATE TAJIMA D FOR POPULATION EXPANSION
 
 
-##4. CHOOSE A FOLDER FOR RUNNING THE ANALYSES. THE FILES MUST BE THERE! 
+
+
+##3. CHOOSE A FOLDER FOR RUNNING THE ANALYSES. THE FILES MUST BE THERE! 
 #A. IN RStudio GO TO  SESSION >> SET WORKING DIRECTORY >> CHOOSE DIRECTORY.. IN RStudio TOOL BAR OR USE THE SHORCUT CTRL+SHIFT+H
 
 
-##5. REMOVE ANY OBJECT OR FUNCTION IN THE ENVIRONMENT:
+##4. REMOVE ANY OBJECT OR FUNCTION IN THE ENVIRONMENT:
 rm(list=ls())
 
 
-##6. LOAD THE FILE "functions_LanGen.R" WITH FUNCTIONS TO BE USED ON THIS STEP. MORE INFORMATION ON FUNCTIONS IN NUMBER 2.
+
+
+##5. LOAD THE FILE "functions_LanGen.R" WITH FUNCTIONS TO BE USED ON THIS STEP. MORE INFORMATION ON FUNCTIONS IN NUMBER 2.
 source("functions_LanGen.R")
 
 
-##7. INSTALL AND LOAD THE PACKAGES
-#A. install the packages automatically
-if("remotes" %in% rownames(installed.packages()) == FALSE){install.packages("remotes")
-} else {print (paste0("'remotes' has already been installed in library"))}
-if("BiocManager" %in% rownames(installed.packages()) == FALSE){install.packages("BiocManager")
-} else {print (paste0("'BiocManager' has already been installed in library"))}
-if("pacman" %in% rownames(installed.packages()) == FALSE){install.packages("pacman")
-} else {print (paste0("'pacman' has already been installed in library"))}
-if("devtools" %in% rownames(installed.packages()) == FALSE){install.packages("devtools")
-} else {print (paste0("'devtools' has already been installed in library"))}
+##6. INSTALL AND LOAD THE PACKAGES ----
+#For r2vcftools do you need install VCFTools in you computer:https://vcftools.github.io/index.html
+#Basic Packages for installation:
+if (!require('remotes'))      install.packages('remotes');           library('remotes')
+if (!require('BiocManager'))  install.packages('BiocManager');       library('BiocManager')
+if (!require('pacman'))       install.packages('pacman');            library('pacman')
+if (!require('devtools'))     install.packages('devtools');          library('devtools')
 
-if("r2vcftools" %in% rownames(installed.packages()) == FALSE){remotes::install_github("nspope/r2vcftools")
-} else {print (paste0("'r2vcftools' has already been installed in library"))}
-if("LEA" %in% rownames(installed.packages()) == FALSE){BiocManager::install("LEA")
-} else {print (paste0("'LEA' has already been installed in library"))}
-if("vcfR" %in% rownames(installed.packages()) == FALSE){install.packages("vcfR")
-} else {print (paste0("'vcfR' has already been installed in library"))}
-if("ggplot2" %in% rownames(installed.packages()) == FALSE){install.packages("ggplot2")
-} else {print (paste0("'ggplot2' has already been installed in library"))}
-if("adegenet" %in% rownames(installed.packages()) == FALSE){install.packages("adegenet")
-} else {print (paste0("'adegenet' has already been installed in library"))}
-if("reshape2" %in% rownames(installed.packages()) == FALSE){install.packages("reshape2")
-} else {print (paste0("'reshape2' has already been installed in library"))}
-if("vegan" %in% rownames(installed.packages()) == FALSE){install.packages("vegan")
-} else {print (paste0("'vegan' has already been installed in library"))}
-if("mmod" %in% rownames(installed.packages()) == FALSE){install.packages("mmod")
-} else {print (paste0("'mmod' has already been installed in library"))}
-if("poppr" %in% rownames(installed.packages()) == FALSE){install.packages("poppr")
-} else {print (paste0("'poppr' has already been installed in library"))}
-if("ecodist" %in% rownames(installed.packages()) == FALSE){install.packages("ecodist")
-} else {print (paste0("'ecodist' has already been installed in library"))}
-if("dartR" %in% rownames(installed.packages()) == FALSE){install.packages("dartR")
-} else {print (paste0("'dartR' has already been installed in library"))}
+#From Github or BiocManager:
+if (!require('r2vcftools'))   remotes::install_github("nspope/r2vcftools");          library('r2vcftools')
+if (!require('LEA'))          BiocManager::install("LEA");                           library('LEA')
 
-#B. load packages multiple packages use the package: 'pacman'. If the package is missing "p_load" will download it from CRAN. Using "" in the name of packages isn't mandatory.
-pacman::p_load(r2vcftools, LEA, vegan, ecodist, vcfR, adegenet, poppr, mmod, reshape2, ggplot2, dartR)
+#From CRAN R:
+if (!require('tidyverse'))    install.packages("tidyverse");         library('tidyverse')
+if (!require('vcfR'))         install.packages("vcfR");              library('vcfR')
+if (!require('dartR'))        install.packages("dartR");             library('dartR')
+if (!require('adegenet'))     install.packages("adegenet");          library('adegenet')
+if (!require('ggplot2'))      install.packages("ggplot2");           library('ggplot2')
+if (!require('mmod'))         install.packages("mmod");              library('mmod')
+if (!require('reshape2'))     install.packages("reshape2");          library('reshape2')
+if (!require('poppr'))        install.packages("poppr");             library('poppr')
+if (!require('ecodist'))      install.packages("ecodist");           library('ecodist')
+if (!require('vegan'))        install.packages("vegan");             library('vegan')
+if (!require('gghighlight'))  install.packages("gghighlight");       library('gghighlight')
+if (!require('ggpubr'))       install.packages("ggpubr");            library('ggpubr')
+if (!require('usedist'))      install.packages("usedist");           library('usedist')
+if (!require('strataG'))      install.packages("strataG");           library('strataG')
 
-##8. CREATE FOLDERS AND DIRECTORIES TO SAVE THE RESULTS:
-create_dir(c("./Results_Diversity", "./Results_Distance", "./Results_TajimaD"))
+#Load multiple packages using the package 'pacman'. If the package is missing "p_load" will download it from CRAN. "" in packages names is not mandatory.
+pacman::p_load(r2vcftools, LEA, vegan, ecodist, vcfR, adegenet, poppr, mmod, reshape2, ggplot2, dartR, gghighlight, ggpubr, usedist, strataG)
 
 
-#------------------------------------------------------------------------------
-#                        1. Loading Files
-#------------------------------------------------------------------------------
-###1.1. CHOOSE A NAME FOR THE PROJECT. MUST BE THE SAME ONE THAN FILTERING STEP:
+
+##7. CREATE FOLDERS AND DIRECTORIES TO SAVE THE RESULTS ----
+create_dir(c("./Results/Step03/Diversity", "./Results/Step03/Distance", "./Results/Step03/TajimaD", "./Results/Step03/Ne" ))
+
+
+
+##8. CREATE A PATTERN FOR GRAPHIC FOLDERS S TO SAVE THE RESULTS ----
+theme_genetics = theme(axis.text=element_text(size=10, color="black"), #text in ticks axes
+                       axis.title=element_text(size=12, face="bold"), #label axes
+                       axis.line = element_line(colour = "black", size = 1, linetype = "solid"), #line on axes
+                       axis.ticks = element_line(colour = "black", size = 1, linetype = "solid"), #line on ticks
+                       axis.ticks.length = unit(.25, "cm"), #ticks length
+                       axis.title.y = element_text(margin = margin(t = 0, r = 20, b = 0, l = 0)), #space between axis and label
+                       axis.title.x = element_text(margin = margin(t = 20, r = 0, b = 0, l = 0)), #space between axis and label
+                       strip.text.x = element_text(size = 12, face="bold"), #facets label 
+                       panel.grid.major = element_blank(), # remove grids
+                       panel.grid.minor = element_blank(), # remove grids
+                       panel.background = element_blank(), # remove background
+                       panel.border = element_blank()) # remove borders)  
+
+
+
+
+
+#### ANALYSIS ---- 
+
+
+#### 1. LOAD FILES -----
 #A. Project name:
 project_name = "pilocarpus"
 
-#B. Choose the number of clusters according to step 2. In my case TESS3. 
-
-###1.2. LOAD VCF FILES AND GEOGRAPHICAL INFORMATIONS: 
-#A. Load neutral .vcf file with geographical information and genetic clusters ID:
-snps_neutral = vcfLink(paste0("vcf/", project_name, "_filtered_neutral_LEA_DAPC_TESS.vcf"), overwriteID=T)
-VCFsummary(snps_neutral) #277 individuals and 6217 SNPs.
+#B. Load neutral .vcf file with geographical information and genetic clusters ID, choosen in step 2. 
+snps_neutral = vcfLink(paste0("vcf/", project_name, "_filtered_neutral_clusters.vcf"), overwriteID=T)
+VCFsummary(snps_neutral) #277 individuals and 5268 SNPs.
 names(snps_neutral@meta) #verify col names in metafile
 
-#B. Number of cluster and method:
+#C. Number and name of cluster and method:
 optimal_K = 4
-method = "TESS"
+name_clusters = c("A", "B", "C", "D")
 
-#B. Position of samples by populion by DAPC approach. Choose one method and change it on script:
-for (i in 1:length(unique(snps_neutral@meta$PopID_tess))){
-  pop = which(snps_neutral@meta$PopID_tess == i)
-  assign(paste0("pop_TESS_", i), pop)
+#D.Position of samples by population/genetic clusters:
+for (i in name_clusters){
+  pop = which(snps_neutral@meta$POP_ID == i)
+  assign(paste0("pop_POSI_", i), pop)
 }
 
 
-###1.3. VERIFY THE MEAN COVERAGE DEPTH: 
-#A. Mean coverage in all dataset
-site.depth = Query(snps_neutral, type="site-mean-depth")
-summary(site.depth$MEAN_DEPTH) #Mean = 83.81 / Median = 71.49
-hist(site.depth$MEAN_DEPTH, breaks=30)
-
-#B. Mean coverage by individual
-coverage_ind = c()
-for (p in 1:length(snps_neutral@sample_id)){
-beta = Query(Subset(snps_neutral, samples = p), type="site-mean-depth")
-coverage_ind[p] = mean(beta$MEAN_DEPTH, na.rm = T)}
-#verify
-coverage_ind
-#save as metafile
-snps_neutral@meta$coverage = coverage_ind
-
-write.csv(coverage_ind, file=paste0("Results_Metafiles/coverage_", project_name, "_by_individual.csv"))
 
 
 
 
-#------------------------------------------------------------------------------
-#                            2. Genetic Diversity
-#------------------------------------------------------------------------------
-###2.1. ESTIMATE GENETIC DIVERSITY:
+
+
+#### 2. GENETIC DIVERSITY BY CLUSTERS ----
 #A. By species/taxon (all samples together)
 Overall = GenDiv(snps_neutral)
-write.csv(Overall, file=paste0("Results_Diversity/Diversity_Overall_neutral_", project_name, ".csv"))
+write.csv(Overall, file=paste0("Results/Step03/Diversity/Diversity_Overall_", project_name, ".csv"))
 
-#B. By individual
-ind = GenDiv_IND(snps_neutral)
-write.csv(ind, file=paste0("Results_Diversity/Diversity_Individual_neutral_", project_name , ".csv"))
 
-#C. By cluster. ONLY IF YOUR K >= 2
+#B. By cluster. ONLY IF YOUR K >= 2
 #define a list of positions for each cluster
-clusters = list(pop_TESS_1, pop_TESS_2, pop_TESS_3, pop_TESS_4)
+clusters = list(pop_POSI_A, pop_POSI_B, pop_POSI_C, pop_POSI_D)
 #subset
 for (i in 1:optimal_K){
   UNIND = snps_neutral@sample_id[clusters[[i]]]
   pop = Subset(snps_neutral, samples=UNIND)
-  assign(paste0("pop_", i), pop)
+  assign(paste0("pop_", name_clusters[i]), pop)
 }
 #genetic diversity by cluster
-pops = list(pop_1, pop_2, pop_3, pop_4)
+pops = list(pop_A, pop_B, pop_C, pop_D)
 
 for (j in 1:optimal_K){
-cluster_div = GenDiv(pops[[j]])
-write.csv(cluster_div, file=paste0("Results_Diversity/Diversity_Cluster_neutral_", project_name, "_POP", j, "_", method, ".csv"))
+  cluster_div = GenDiv(pops[[j]])
+  write.csv(cluster_div, file=paste0("Results/Step03/Diversity/Diversity_Clusters_", project_name, "_POP_", name_clusters[j], ".csv"))
 }
 
-####2.2. COMPARE GENETIC DIVERSITY BETWEEN POPULATION OR SPECIES:
-#A. Estimated diversity by individual in each population
-ind_ste1 = GenDiv_IND(pop_1)
-ind_ste1$SPE = c("STE_1")
-ind_ste2 = GenDiv_IND(pop_2)
-ind_ste2$SPE = c("STE_2")
-ind_ste3 = GenDiv_IND(pop_3)
-ind_ste3$SPE = c("STE_3")
-ind_ste4 = GenDiv_IND(pop_4)
-ind_ste3$SPE = c("STE_4")
 
-#B.Create a data frame to analysis
-table_diversity = rbind(ind_ste1,ind_ste2,ind_ste3,,ind_ste4)
-variaveis = table_diversity[, 1:4]
-species = as.factor(table_diversity[ ,5])
-plan_anova = data.frame(species,variaveis)
-classes = as.factor(plan_anova$species)
 
-#C. Calculate ANOVA
-sink(paste0("Results_Diversity/Ind_Diversity_By_Population_ANOVA_TUKEYS_", project_name, ".doc"))
-for(i in 2:ncol(plan_anova)){
-  column<- names (plan_anova[i])
-  result_anova<- aov(plan_anova[,i]~classes, data= plan_anova)
-  result_anova2<- summary(aov(plan_anova[,i]~classes, data= plan_anova))
-  tk<- TukeyHSD (result_anova)
-  print(column)
-  print(result_anova2)
-  print(tk)
+
+
+
+#### 3. GENETIC DIVERSITY BY INDIVIDUALS ----
+#A. All individuals
+ind = GenDiv_IND(snps_neutral)
+write.csv(ind, file=paste0("Results/Step03/Diversity/Diversity_Individual_", project_name , ".csv"))
+
+
+
+#B. By Individual in each cluster 
+pops = list(pop_A, pop_B, pop_C, pop_D)
+
+for (j in 1:optimal_K){
+  cluster_div = GenDiv_IND(pops[[j]])
+  assign(paste0("ind_diver_pop_", name_clusters[j]), cluster_div)
+  write.csv(cluster_div, file=paste0("Results/Step03/Diversity/Diversity_Individual_Clusters_", project_name, "_POP_", name_clusters[j], ".csv"))
 }
-sink()
 
-#D. Calculate general p-value
-sink(paste0("Results_Diversity/Ind_Diversity_By_Population_ANOVA_p-values_", project_name, ".doc"))
-for(i in 2:ncol(plan_anova)){
-  column<- names (plan_anova[i])
-  result_anova<- summary(aov(plan_anova[,i]~classes, data= plan_anova))[[1]][["Pr(>F)"]]
-  print(column)
-  print(result_anova) 
+
+
+#C. Comparing genetic diversity between clusters by ANOVA/Tukey's test:
+# creating a df for analyses:
+ind_diver_pop_A = ind_diver_pop_A %>% mutate(POP = "A", .before = Ho_O)
+ind_diver_pop_B = ind_diver_pop_B %>% mutate(POP = "B", .before = Ho_O)
+ind_diver_pop_C = ind_diver_pop_C %>% mutate(POP = "C", .before = Ho_O)
+ind_diver_pop_D = ind_diver_pop_D %>% mutate(POP = "D", .before = Ho_O)
+  
+df_diversity =
+  full_join(ind_diver_pop_A, ind_diver_pop_B) %>%
+  full_join(ind_diver_pop_C) %>%
+  full_join(ind_diver_pop_D) %>%
+  mutate(POP = as.factor(POP))
+
+head(df_diversity)
+str(df_diversity)
+
+#Perform ANOVA and Tukey
+for(i in 2:ncol(df_diversity)){
+  column =  names(df_diversity[i])
+  result_anova = aov(df_diversity[,i] ~ POP, data= df_diversity)
+  result_anova2 = summary(aov(df_diversity[,i] ~ POP, data= df_diversity))
+  tk = TukeyHSD (result_anova)
+  df = tibble::rownames_to_column(as.data.frame(tk$POP), "POP")
+  write.csv(df, file=paste0("Results/Step03/Diversity/Comparing_Individual_Diversity_Clusters_", project_name, "_", column, ".csv"))
+  write.csv(as.matrix(result_anova2[[1]]),file=paste0("Results/Step03/Diversity/Comparing_Individual_Diversity_Clusters_p-value_", project_name, "_", column, ".csv"))
+  
+  graph = ggplot(data=df, aes(y=POP, x=diff, xmin=lwr, xmax=upr))+
+    geom_point() +
+    geom_errorbarh(height=.2) +
+    geom_vline(xintercept=0, color="black", linetype="dashed", alpha=1)+
+    theme_bw() +
+    theme_genetics +
+    xlab("Differences") + ylab("Comparing Clusters")
+  
+  ggsave(filename = paste0("Results/Step03/Diversity/Comparing_Individual_Diversity_Clusters_", project_name, "_", column, ".pdf"), plot = graph, device = "pdf", dpi = 300)
+  
 }
-sink()
 
 
-#### 2.3. BOXPLOT TO COMPARE VALUES AMONG SPECIES:
-#A. Reshape the dataframe:
-dat.m = melt(plan_anova,id.vars="species")
 
-#B. Create a graph
-boxplot_diversity = ggplot(dat.m)+
-  geom_boxplot(aes(x=species, y=value))+
-  facet_wrap(~variable, scales="free")+
-  geom_point(aes(species, value), size = 1, pch=19)+
+
+
+#D. Plot bars graphs with highlights to representing clusters genetic metrics
+#creating inputs for graphics:
+df_highligth = df_diversity %>%
+  melt(., id.vars=c("POP"))
+facets_ind = c("Ho_O","He_O","He_E", "FIS")
+colors_pop = c('#ffff00','#ffc0cb', "#ff0000", '#0000ff') #color for the genetic cluster
+labels_pop = c(A = "POP A", B = "POP B", C = "POP C", D = "POP D") #name for the genetic cluster
+
+
+#Graphics
+ho_O = ggplot(df_highligth[df_highligth$variable %in% facets_ind[1],], aes(value, fill = POP))+
+  geom_histogram(bins = 30, color="black") +
+  gghighlight() +
+  facet_wrap(~ POP, nrow = 1, labeller = labeller(POP = labels_pop)) +
+  scale_fill_manual (values = colors_pop) +
+  xlab(expression(bold(Observed~Homozygosity~(Ho[OBS])))) + ylab("Frequency") +
   theme_bw()+
-  labs(y= NULL, x = NULL)
+  theme_genetics
+ho_O
 
-#C.Verify
-boxplot_diversity
+he_O = ggplot(df_highligth[df_highligth$variable %in% facets_ind[2],], aes(value, fill = POP))+
+  geom_histogram(bins = 30, color="black") +
+  gghighlight() +
+  facet_wrap(~ POP, nrow = 1) +
+  scale_fill_manual (values = colors_pop) +
+  xlab(expression(bold(Observed~Heterozygosity~(He[OBS])))) + ylab("Frequency") +
+  theme_bw()+
+  theme_genetics +
+  theme(strip.background = element_blank(),
+        strip.text.x = element_blank())
+he_O
 
-#D. Save as pdf:
-pdf(paste0("Results_Diversity/Diversity_Genetic_Boxplot_Populations_", project_name, ".csv"))
-boxplot_diversity
+
+he_E = ggplot(df_highligth[df_highligth$variable %in% facets_ind[3],], aes(value, fill = POP))+
+  geom_histogram(bins = 30, color="black") +
+  gghighlight() +
+  facet_wrap(~ POP, nrow = 1) +
+  scale_fill_manual (values = colors_pop) +
+  xlab(expression(bold(Expected~Heterozygosity~(He[EXP])))) + ylab("Frequency") +
+  theme_bw()+
+  theme_genetics+
+  theme(strip.background = element_blank(),
+        strip.text.x = element_blank())
+he_E
+
+
+fis = ggplot(df_highligth[df_highligth$variable %in% facets_ind[4],], aes(value, fill = POP))+
+  geom_histogram(bins = 30, color="black") +
+  gghighlight() +
+  facet_wrap(~ POP, nrow = 1) +
+  scale_fill_manual (values = colors_pop) +
+  xlab(expression(bold(Inbreeding~Coefficient~(F[IS])))) + ylab("Frequency") +
+  theme_bw()+
+  theme_genetics +
+  theme(strip.background = element_blank(),
+        strip.text.x = element_blank())
+fis
+
+
+pdf("Results/Step03/Diversity/Histogram_IND_panel.pdf", onefile =F, width = 7 , height = 10)
+ggarrange(ho_O, he_O, he_E, fis,
+          labels = c("A", "B", "C", "D"),
+          font.label = list(size = 16, face = "bold", color ="black"),
+          #vjust = 1, hjust = 1,
+          ncol = 1, nrow = 4)
 dev.off()
 
 
 
-#------------------------------------------------------------------------------
-#                         3. Genotype Imputation
-#------------------------------------------------------------------------------
-###3.1 GENOTYPE IMPUTATION USING LEA. The genotypic matrix completion is based on estimated ancestry coefficients and ancestral genotype frequencies
-#A. Convert VCF to LFMM
-lfmm = Lfmm(snps_neutral, output.file=paste0("Results_Distance/Impute_LEA_", project_name, ".lfmm"))
 
-#B. Run sNMF to calculate ancestry coefficients and ancestral genotype frequencies
-project.snmf = snmf(paste0("Results_Distance/Impute_LEA_", project_name, ".lfmm"), K = optimal_K, entropy = TRUE, repetitions = 10, project = "new", seed=123)
 
-#C. You may load project file if it was saved in previous run
-#project.snmf = load.snmfProject(paste0("Results_Distance/Impute_LEA_", project_name, ".snmfProject"))
 
-#D. select the run with the lowest cross-entropy value
+
+#### 4. GENETIC DISTANCE BY CLUSTERS----
+#A. FST. ONLY IF YOUR K >= 2:
+#Load as vcfR 
+snps = read.vcfR(paste0("vcf/", project_name, "_filtered_neutral_clusters.vcf"), verbose = T)
+
+#Convert vcfR to genlight:
+genlightdata = vcfR2genlight (snps)
+
+# Define clusters as POP_ID
+genlightdata@pop = as.factor(snps_neutral@meta$POP_ID)
+
+# Run FST
+fst = gl.fst.pop(genlightdata, nboots = 100, percent = 95, nclusters = 1)
+
+#save results
+write.csv(fst$Fsts, file=paste0("Results/Step03/Distance/FST_clusters_Fstas_", project_name, ".csv"))
+write.csv(fst$Pvalues, file=paste0("Results/Step03/Distance/FST_clusters_pvalues_", project_name , ".csv"))
+write.csv(fst$Bootstraps, file=paste0("Results/Step03/Distance/FST_clusters_bootstrap_", project_name , ".csv"))
+
+
+
+
+#B. Jost's D, Gst's Nei, and Gst's Hedrick
+#Convert vcfR to genind and define POP ID:
+geninddata = vcfR2genind (snps)
+pop(geninddata) = snps_neutral@meta$POP_ID
+geninddata
+
+#Jost's D 
+D = pairwise_D(geninddata, linearized = FALSE)
+write.csv(as.matrix(D), file = paste0("Results/Step03/Distance/D_clusters_", project_name,".csv"))
+
+#Gst's Nei
+GST_N = pairwise_Gst_Nei(geninddata, linearized = FALSE)
+write.csv(as.matrix(GST_N), file = paste0("Results/Step03/Distance/GST_Nei_clusters_",project_name,".csv"))
+
+#Gst's Hedrick
+GST_H = pairwise_Gst_Hedrick(geninddata, linearized = FALSE)
+write.csv(as.matrix(GST_H), file = paste0("Results/Step03/Distance/GST_Hend_clusters_", project_name, ".csv"))
+
+
+
+
+
+
+
+
+#### 5. GENETIC DISTANCE BY INDIVIDUALS ----
+#A.Load vcf if you need it
+snps_neutral = vcfLink(paste0("vcf/", project_name, "_filtered_neutral_clusters.vcf"), overwriteID=T)
+VCFsummary(snps_neutral) #277 individuals and 5268 SNPs.
+
+
+#B. Convert VCF to LFMM
+lfmm = Lfmm(snps_neutral, output.file=paste0("Results/Step03/Distance/Impute_LEA_", project_name, ".lfmm"))
+
+#C. Run sNMF to calculate ancestry coefficients and ancestral genotype frequencies
+optimal_K = 4
+project.snmf = snmf(paste0("Results/Step03/Distance/Impute_LEA_", project_name, ".lfmm"), K = optimal_K, entropy = TRUE, repetitions = 10, project = "new", seed=123)
+
+#D. You may load project file if it was saved in previous run
+project.snmf = load.snmfProject(paste0("Results/Step03/Distance/Impute_LEA_", project_name, ".snmfProject"))
+
+#E. select the run with the lowest cross-entropy value
 best = which.min(cross.entropy(project.snmf, K = optimal_K))
 
-#E. Impute the missing genotypes
-impute(project.snmf, paste0("Results_Distance/Impute_LEA_", project_name, ".lfmm"), method = 'mode', K = optimal_K, run = best)
+#F. Impute the missing genotypes
+impute(project.snmf, paste0("Results/Step03/Distance/Impute_LEA_", project_name, ".lfmm"), method = 'mode', K = optimal_K, run = best)
 
-#F. Load imputed file
-lfmmformat_imp = read.lfmm(paste0("Results_Distance/Impute_LEA_", project_name, ".lfmm_imputed.lfmm"))
+#G. Load imputed file
+lfmmformat_imp = read.lfmm(paste0("Results/Step03/Distance/Impute_LEA_", project_name, ".lfmm_imputed.lfmm"))
 lfmmformat_imp[1:10,1:10]
 dim(lfmmformat_imp)
 
-#G. Rename row and columns
+#H. Rename row and columns
 length(snps_neutral@sample_id)
 length(snps_neutral@site_id)
 rownames(lfmmformat_imp) = snps_neutral@sample_id
@@ -254,12 +371,11 @@ colnames(lfmmformat_imp) = snps_neutral@site_id
 lfmmformat_imp[1:10,1:10]
 
 
-#------------------------------------------------------------------------------
-#                     4. Genetic Distance by Individual
-#------------------------------------------------------------------------------
-###4.1 PCA-DISTANCE BASED ON BROKEN STICK RULE
+
+
+### 5.1. PCA-DISTANCE BASED ON BROKEN STICK RULE ----
 #PCA-based distance and Dps: distance values among all pairs are calculated twice (below AND above diagonal) without distance within individuals
-#A. Calcule PCA
+#A. Calculate PCA
 PCAprcomp_imp = prcomp(lfmmformat_imp, center=TRUE, scale=TRUE)
 str(PCAprcomp_imp)
 summary(PCAprcomp_imp)
@@ -267,56 +383,69 @@ summary(PCAprcomp_imp)
 #B. Broken Stick PC values
 screeplot(PCAprcomp_imp, bstick=TRUE, type="lines")
 screeplot(PCAprcomp_imp, bstick=TRUE, type="barplot")
-#4 PCs
+#3 PCs
 summary(PCAprcomp_imp)
-#4PCs are 10.662% of variance
-n_pcs = 4
+#4PCs are 9.22% of variance
+n_pcs = 3
 
 #C. Calculate PCA-based distance based on Broken Stick Rule
-PC_distLEA_prcomp = distance(PCAprcomp_imp$x[,1:n_pcs], method = "euclidean")
+PC_distLEA_prcomp = distance(PCAprcomp_imp$x[,1:n_pcs], method = "mahalanobis") # "mahalanobis" ou "euclidean", for multivariate space + than 2 PC, "mahalanobis" is better! 
 #verify
-head(PC_distLEA_prcomp)
+PC_distLEA_prcomp
 class(PC_distLEA_prcomp)
 #convert to matrix
 t_prcompLEA = as.matrix(PC_distLEA_prcomp)
 t_prcompLEA[1:10,1:10]
 
 #D. Save results
-write.csv(t_prcompLEA, file=paste0("Results_Distance/PCA_Distance_BSR_IND_neutral_", project_name, ".csv"))
+write.csv(t_prcompLEA, file=paste0("Results/Step03/Distance/PCA_Distance_BSR_IND_mahalanobis_", project_name, ".csv"))
 
 
-###4.2. PCA-DISTANCE BASED ON 95% OF VARIANCE
+
+
+
+###5.2. PCA-DISTANCE BASED ON 95% OF VARIANCE ----
 #A. Verify the number of PC that explain 95% of variance
 summary(PCAprcomp_imp)
 #248PCs are 94.893% of variance or see Step 2 in DAPC action #E
-n_pcs = 248
+n_pcs = 249
 
 ##B. Calculate PCA-based distance based on 95% of variance
-PC_distLEA_95 = distance(PCAprcomp_imp$x[,1:n_pcs], method = "euclidean")
-head(PC_distLEA_95)
+PC_distLEA_95 = distance(PCAprcomp_imp$x[,1:n_pcs], method = "mahalanobis")
+PC_distLEA_95
 class(PC_distLEA_95)
 t_prcomp95LEA = as.matrix(PC_distLEA_95)
 t_prcomp95LEA[1:10,1:10]
 
 #C. Save results
-write.csv(t_prcomp95LEA, file=paste0("Results_Distance/PCA_Distance_95Var_IND_neutral_", project_name, ".csv"))
+write.csv(t_prcomp95LEA, file=paste0("Results/Step03/Distance/PCA_Distance_95Var_IND_mahalanobis_", project_name, ".csv"))
 
 
-###4.3. RELATEDNESS IN ALL SAMPLES
+
+
+###5.3. RELATEDNESS IN ALL SAMPLES ----
 #Yang's Relatedness: distance values among all pairs are calculated once (below diagonal) with distance within individuals
 #A. Calculate Relatedness
 REL_YANG = Relatedness(snps_neutral, type = "yang",verbose = TRUE)
 head(REL_YANG)
 nrow(REL_YANG) 
-colnames(REL_YANG)<-c("INDV1","INDV2","RELATEDNESS_AJK_Yang")
+colnames(REL_YANG) = c("INDV1","INDV2","RELATEDNESS_AJK_Yang")
+
+#B. Exclude Relatedness between same individual
+REL_YANG = REL_YANG[REL_YANG$INDV1 != REL_YANG$INDV2,]
+#verify
+head(REL_YANG)
+nrow(REL_YANG) #1485 comparisons
+
 
 #B. Save results:
-write.csv(REL_YANG, file=paste0("Results_Distance/Yang_Reletedness_IND_neutral_", project_name, ".csv"))
+write.csv(REL_YANG, file=paste0("Results/Step03/Distance/Yang_Reletedness_IND_neutral_", project_name, ".csv"))
 
 
-###4.4. Dps DISTANCE
+
+###5.5. Dps DISTANCE ----
 #A. Convert VCF to genind
-snps =  read.vcfR(paste0("vcf/", project_name, "_filtered_neutral_LEA_DAPC_TESS.vcf"), verbose = T)
+snps =  read.vcfR(paste0("vcf/", project_name, "_filtered_neutral_clusters.vcf"), verbose = T)
 
 #B. Convert data into genind
 geninddata = vcfR2genind(snps)
@@ -327,168 +456,241 @@ dps_shared = propShared(geninddata)
 head(dps_shared)
 
 #D. Save results:
-write.csv(dps_shared, file=paste0("Results_Distance/Dps_Shared_IND_neutral_", project_name, ".csv"))
+write.csv(dps_shared, file=paste0("Results/Step03/Distance/Dps_Shared_IND_neutral_", project_name, ".csv"))
 
 
-#------------------------------------------------------------------------------
-#                     5. Genetic Distance by Clusters
-#------------------------------------------------------------------------------
-###5.1. RELATEDNESS BY CLUSTERS
-#A. Clusters were defined in #2.C
-pops
 
-#B. Calclate relatedness by cluster
+
+
+###5.5. GRAPHICS FOR DISTANCE METRICS ----
+#A. Metrics in a matrix:
+df = as.data.frame(dps_shared[lower.tri(dps_shared, diag = F)])
+names(df) = "Dps"
+names(df)
+
+p = ggplot(data=df, mapping = aes(x= Dps)) +
+  geom_histogram(binwidth = 0.0005) +
+  theme_classic()+
+  theme_genetics+
+  xlab ("Proportion of Shared Alleles") + ylab ("Frequency")
+
+#B. Metrics in a df:
+q = ggplot(data=REL_YANG, mapping = aes(x= RELATEDNESS_AJK_Yang)) +
+  geom_histogram(binwidth = 0.0005) +
+  theme_classic()+
+  theme_genetics+
+  xlab ("Relatedness Coefficient") + ylab ("Frequency")
+
+
+#C. Choose one and save it as pdf:
+pdf("Results/Step03/Distance/Histogram_relatedness_all.pdf", onefile = F)
+q
+dev.off()
+
+
+#D. Genetic distance by Clusters
+#Relatedness
+pops #Clusters were defined
+
+# relatedness by cluster
 for (j in 1:optimal_K){
   REL_POP = Relatedness(pops[[j]], type = "yang",verbose = TRUE)
   colnames(REL_POP) = c("INDV1","INDV2","RELATEDNESS_AJK_Yang")
-  write.csv(REL_POP, file=paste0("Results_Distance/Yang_Reletedness_CLUSTERS_neutral_", project_name, "_POP", j, ".csv"))
+  REL_POP = REL_POP[REL_POP$INDV1 != REL_POP$INDV2,]
+  write.csv(REL_POP, file=paste0("Results/Step03/Distance/Yang_Reletedness_CLUSTERS_neutral_", project_name, "_POP_", name_clusters[j], ".csv"))
+  
+  q2 = ggplot(data=REL_POP, mapping = aes(x= RELATEDNESS_AJK_Yang)) +
+    geom_histogram(binwidth = 0.0005) +
+    theme_classic()+
+    theme_genetics+
+    xlab ("Relatedness Coefficient") + ylab ("Frequency")
+  
+  ggsave(filename = paste0("Results/Step03/Distance/Yang_Reletedness_CLUSTERS_", project_name, "_POP_", name_clusters[j], ".pdf"), plot = q2, device = "pdf", dpi = 300)
+
+}
+
+#Dps or another matrix metric:
+#define a list of positions for each cluster
+clusters = list(pop_POSI_A, pop_POSI_B, pop_POSI_C, pop_POSI_D)
+
+class(dps_shared)
+
+for (j in 1:optimal_K){
+  positions = clusters[[j]]
+  mt = dist_subset(dps_shared, snps_neutral@sample_id[positions])
+  df = as.data.frame(mt[lower.tri(mt, diag = F)])
+  names(df) = "Dps"
+
+  p2 = ggplot(data=df, mapping = aes(x= Dps)) +
+    geom_histogram(binwidth = 0.0005) +
+    theme_classic()+
+    theme_genetics+
+    xlab ("Proportion of Shared Alleles") + ylab ("Frequency")
+  
+  ggsave(filename = paste0("Results/Step03/Distance/Dps_Shared_CLUSTERS_", project_name, "_POP_", name_clusters[j], ".pdf"), plot = p2, device = "pdf", dpi = 300)
 }
 
 
-###5.2. FST. ONLY IF YOUR K >= 2:
-#A. Convert vcfR to genlight:
-genlightdata = vcfR2genlight (snps)
-
-#B. Define pop as POP_ID from DAPC
-genlightdata@pop = as.factor(snps_neutral@meta$PopID_tess)
-
-#C. Run FST
-fst = gl.fst.pop(genlightdata, nboots = 100, percent = 95, nclusters = 1)
-#save results
-write.csv(fst$Fsts, file=paste0("Results_Distance/FST_clusters_Fstas_", project_name , "_", method, ".csv"))
-write.csv(fst$Pvalues, file=paste0("Results_Distance/FST_clusters_pvalues_", project_name , "_", method, ".csv"))
-write.csv(fst$Bootstraps, file=paste0("Results_Distance/FST_clusters_bootstrap_", project_name , "_", method, ".csv"))
 
 
-#5.3. GST, D, AND OTHERS
-#A.Define pop as POP_ID from TESS
-geninddata
-pop(geninddata) = snps_neutral@meta$PopID_tess
-geninddata
-
-#B. Define Inputs
-datasets = c(geninddata)
-names = c("TESS")
-
-#C. Calculate summary statistic for dataset
-summary_stat (datasets, names)
 
 
-#------------------------------------------------------------------------------
-#                              6. Tajima D
-#------------------------------------------------------------------------------
-###6.1. FILTER TO A SINGLE SNP PER CONTIG
+
+
+
+#### 6. TAJIMA D BY CLUSTERS ----
 #A. Load the VCF file:
-snps_neutral = vcfLink(paste0("vcf/", project_name, "_filtered_neutral_LEA_DAPC_TESS.vcf"), overwriteID=T)
+snps_neutral = vcfLink(paste0("vcf/", project_name, "_filtered_neutral_clusters.vcf"), overwriteID=T)
 VCFsummary(snps_neutral) #277 individuals and 5268 SNPs.
 
-#B. A single SNP per contig. This thins SNPs to a given distance in bp from one another. Setting the distance higher than the length of the contig ensures that you'll have a single SNP per contig.
+#B. Filter one SNP per contig. This thins SNPs to a given distance in bp from one another. Setting the distance higher than the length of the contig ensures that you'll have a single SNP per contig.
 snps_thin = Filter(snps_neutral, filterOptions(thin=300)) 
 VCFsummary(snps_thin) #277 individuals and 3412 SNPs.
 
 
-###6.2. SUBSET BY GENETIC CLUSTERS/POPULATIONS. SAME AS #3.C
-#define a list of positions for each cluster
-clusters = list(pop_TESS_1, pop_TESS_2, pop_TESS_3, pop_TESS_4)
+#C. Subset vcf by cluster
+clusters = list(pop_POSI_A, pop_POSI_B, pop_POSI_C, pop_POSI_D)
+optimal_K = 4
+name_clusters = c("A", "B", "C", "D")
+
 #subset
 for (i in 1:optimal_K){
   UNIND = snps_thin@sample_id[clusters[[i]]]
   pop = Subset(snps_thin, samples=UNIND)
-  assign(paste0("popD_", i), pop)
+  assign(paste0("popD_", name_clusters[i]), pop)
 }
 #verify
-VCFsummary(popD_1) #47 individuals and 3412 SNPs.
-VCFsummary(popD_2) #47 individuals and 3412 SNPs.
-VCFsummary(popD_3) #65 individuals and 3412 SNPs.
-VCFsummary(popD_4) #118 individuals and 3412 SNPs.
+VCFsummary(popD_A) #47 individuals and 3412 SNPs.
+VCFsummary(popD_B) #47 individuals and 3412 SNPs.
+VCFsummary(popD_C) #65 individuals and 3412 SNPs.
+VCFsummary(popD_D) #118 individuals and 3412 SNPs.
 
 
-###6.3. ESTIMATE TAJIMA'S D, BIAS-CORRECTED FOR MAF
-tajd_p1 = TajimaD(popD_1, nboot=10000, maf=0.05, use_vcftools_D=FALSE)
-tajd_p1$results
-str(tajd_p1$simulations)
+#D. ESTIMATE TAJIMA'S D, BIAS-CORRECTED FOR MAF
+tajd_pA = TajimaD(popD_A, nboot=10000, maf=0.05, use_vcftools_D=FALSE)
+tajd_pA$results
+str(tajd_pA$simulations)
+save(tajd_pA, file = "./Results/Step03/TajimaD/tajd_pA.Rdata")
 
-tajd_p2 = TajimaD(popD_2, nboot=10000, maf=0.05, use_vcftools_D=FALSE)
-tajd_p2$results
-str(tajd_p2$simulations)
+tajd_pB = TajimaD(popD_B, nboot=10000, maf=0.05, use_vcftools_D=FALSE)
+tajd_pB$results
+str(tajd_pB$simulations)
+save(tajd_pB, file = "./Results/Step03/TajimaD/tajd_pB.Rdata")
 
-tajd_p3 = TajimaD(popD_3, nboot=10000, maf=0.05, use_vcftools_D=FALSE)
-tajd_p3$results
-str(tajd_p3$simulations)
+tajd_pC = TajimaD(popD_C, nboot=10000, maf=0.05, use_vcftools_D=FALSE)
+tajd_pC$results
+str(tajd_pC$simulations)
+save(tajd_pC, file = "./Results/Step03/TajimaD/tajd_pC.Rdata")
 
-tajd_p4 = TajimaD(popD_4, nboot=10000, maf=0.05, use_vcftools_D=FALSE)
-tajd_p4$results
-str(tajd_p4$simulations)
-
-
-###6.4. SAVE AND LOAD TAJIMA'S D RESULTS
-#A. Save
-save(tajd_p1, file = "./Results_TajimaD/tajd_p1.Rdata")
-save(tajd_p2, file = "./Results_TajimaD/tajd_p2.Rdata")
-save(tajd_p3, file = "./Results_TajimaD/tajd_p3.Rdata")
-save(tajd_p4, file = "./Results_TajimaD/tajd_p4.Rdata")
-
-#B. Load 
-load("./Results_TajimaD/tajd_p1.Rdata")
-load("./Results_TajimaD/tajd_p2.Rdata")
-load("./Results_TajimaD/tajd_p3.Rdata")
-load("./Results_TajimaD/tajd_p4.Rdata")
+tajd_pD = TajimaD(popD_D, nboot=10000, maf=0.05, use_vcftools_D=FALSE)
+tajd_pD$results
+str(tajd_pD$simulations)
+save(tajd_pD, file = "./Results/Step03/TajimaD/tajd_pD.Rdata")
 
 
-###6.5. PLOT OBSERVED TAJIMA'D AGAINST THE NULL DISTRIBUTION
-#A.The null distribution (histogram) is shown next to the observed Tajima's D value (red line)
+#E. Load results 
+load("./Results/Step03/TajimaD/tajd_pA.Rdata")
+load("./Results/Step03/TajimaD/tajd_pB.Rdata")
+load("./Results/Step03/TajimaD/tajd_pC.Rdata")
+load("./Results/Step03/TajimaD/tajd_pD.Rdata")
 
-#B.POP1
-pdf(paste0("./Results_TajimaD/TajimaD_POP1.pdf"), onefile = F)
-ggplot(data.frame(x=tajd_p1$simulations$'Null, bias-corrected')) + geom_histogram(aes(x=x), binwidth=0.01) + geom_vline(xintercept=mean(tajd_p1$simulations$'Bootstrap, bias-corrected'), lty=2, col="red") + geom_vline(xintercept=0) + theme_bw() + ggtitle("Simulations for POP1") +labs(y= "Frequency", x = "Tajima's D") 
+
+#F. Save results in a table
+A_res = cbind.data.frame(tajd_pA$results$`Tajima D, bias-corrected`, tajd_pA$results$`Tajima D, bias-corrected 95CI`[1], tajd_pA$results$`Tajima D, bias-corrected 95CI`[2], tajd_pA$results$`Pr(abs(D) > abs(D_observed)|Null)`) %>%
+  setNames(c("Tajima's D", "Lower", "Upper", "p-value"))
+
+B_res = cbind.data.frame(tajd_pB$results$`Tajima D, bias-corrected`, tajd_pB$results$`Tajima D, bias-corrected 95CI`[1], tajd_pB$results$`Tajima D, bias-corrected 95CI`[2], tajd_pB$results$`Pr(abs(D) > abs(D_observed)|Null)`)  %>%
+  setNames(c("Tajima's D", "Lower", "Upper", "p-value"))
+
+C_res = cbind.data.frame(tajd_pC$results$`Tajima D, bias-corrected`, tajd_pC$results$`Tajima D, bias-corrected 95CI`[1], tajd_pC$results$`Tajima D, bias-corrected 95CI`[2], tajd_pC$results$`Pr(abs(D) > abs(D_observed)|Null)`) %>%
+  setNames(c("Tajima's D", "Lower", "Upper", "p-value"))
+
+D_res = cbind.data.frame(tajd_pD$results$`Tajima D, bias-corrected`, tajd_pD$results$`Tajima D, bias-corrected 95CI`[1], tajd_pD$results$`Tajima D, bias-corrected 95CI`[2], tajd_pD$results$`Pr(abs(D) > abs(D_observed)|Null)`) %>%
+  setNames(c("Tajima's D", "Lower", "Upper", "p-value"))
+
+res = rbind(A_res, B_res, C_res, D_res)
+rownames(res) = c("A", "B", "C", "D")
+head(res)
+write.csv(res, "./Results/Step03/TajimaD/Tajima_results.csv")
+
+
+
+#G. Plot null distribution (histogram) is shown next to the observed Tajima's D value (red line)
+options(scipen = 9999)
+dfA = 
+  cbind.data.frame(tajd_pA$simulations$`Null, bias-corrected`, tajd_pA$simulations$`Bootstrap, bias-corrected`) %>%
+  setNames(., c("Nullc", "Boostrapc")) %>%
+  mutate(., POP = "A")
+head(dfA)
+
+dfB = 
+  cbind.data.frame(tajd_pB$simulations$`Null, bias-corrected`, tajd_pB$simulations$`Bootstrap, bias-corrected`) %>%
+  setNames(., c("Nullc", "Boostrapc")) %>%
+  mutate(., POP = "B")
+head(dfB)
+
+dfC = 
+  cbind.data.frame(tajd_pC$simulations$`Null, bias-corrected`, tajd_pC$simulations$`Bootstrap, bias-corrected`) %>%
+  setNames(., c("Nullc", "Boostrapc")) %>%
+  mutate(., POP = "C")
+head(dfC)
+
+dfD = 
+  cbind.data.frame(tajd_pD$simulations$`Null, bias-corrected`, tajd_pD$simulations$`Bootstrap, bias-corrected`) %>%
+  setNames(., c("Nullc", "Boostrapc")) %>%
+  mutate(., POP = "D")
+head(dfD)
+
+df_taj = 
+  full_join (dfA, dfB) %>%
+  full_join(dfC) %>%
+  full_join(dfD)
+
+plot_taj = ggplot(df_taj, aes(x = Nullc, fill = POP)) +
+  geom_histogram(binwidth=0.005) +
+  geom_vline(xintercept=0) +
+  geom_vline(data=filter(df_taj, POP=="A"), aes(xintercept=mean(Boostrapc)), lty=2, col="red") + 
+  geom_vline(data=filter(df_taj, POP=="B"), aes(xintercept=mean(Boostrapc)), lty=2, col="red") + 
+  geom_vline(data=filter(df_taj, POP=="C"), aes(xintercept=mean(Boostrapc)), lty=2, col="red") + 
+  geom_vline(data=filter(df_taj, POP=="D"), aes(xintercept=mean(Boostrapc)), lty=2, col="red") + 
+  facet_wrap(~ POP, nrow = 1) +
+  scale_fill_manual (values = c("gray", "gray", "gray", "gray"))+
+  theme_bw() +
+  theme_genetics +
+  theme(legend.position = "none") +
+  ylab("Frequency") +xlab ("Tajima's D")
+plot_taj 
+
+pdf("./Results/Step03/TajimaD/TajimaD_simulations_graphs.pdf", onefile = F)
+plot_taj
 dev.off()
 
-#C.POP2
-pdf(paste0("./Results_TajimaD/TajimaD_POP2.pdf"), onefile = F)
-ggplot(data.frame(x=tajd_p2$simulations$'Null, bias-corrected')) + geom_histogram(aes(x=x), binwidth=0.01) + geom_vline(xintercept=mean(tajd_p2$simulations$'Bootstrap, bias-corrected'), lty=2, col="red") + geom_vline(xintercept=0) + theme_bw() + ggtitle("Simulations for POP2") +labs(y= "Frequency", x = "Tajima's D") 
-dev.off()
-
-#D.POP3
-pdf(paste0("./Results_TajimaD/TajimaD_POP3.pdf"), onefile = F)
-ggplot(data.frame(x=tajd_p3$simulations$'Null, bias-corrected')) + geom_histogram(aes(x=x), binwidth=0.01) + geom_vline(xintercept=mean(tajd_p3$simulations$'Bootstrap, bias-corrected'), lty=2, col="red") + geom_vline(xintercept=0) + theme_bw() + ggtitle("Simulations for POP3") +labs(y= "Frequency", x = "Tajima's D") 
-dev.off()
-
-#E.POP4
-pdf(paste0("./Results_TajimaD/TajimaD_POP4.pdf"), onefile = F)
-ggplot(data.frame(x=tajd_p4$simulations$'Null, bias-corrected')) + geom_histogram(aes(x=x), binwidth=0.01) + geom_vline(xintercept=mean(tajd_p4$simulations$'Bootstrap, bias-corrected'), lty=2, col="red") + geom_vline(xintercept=0) + theme_bw() + ggtitle("Simulations for POP4") +labs(y= "Frequency", x = "Tajima's D") 
-dev.off()
 
 
-#------------------------------------------------------------------------------
-#               7. Converting VCF to Genepop to run NeEstimator 2.14
-#------------------------------------------------------------------------------
-###5.1. LOAD VCF
-snpsR = read.vcfR(paste0("vcf/", project_name, "_filtered_neutral_LEA_DAPC_TESS.vcf"), verbose = T)
 
 
-###5.2. DEFINING POPULATIONS USING THE  VCF METAFILE:
-snps = vcfLink(paste0("vcf/", project_name, "_filtered_neutral_LEA_DAPC_TESS.vcf"), overwriteID=T)
-VCFsummary(snps)
-population = as.factor(snps@meta$PopID_tess)
 
+#### 7. CONVERTING VCF TO GENEPOP TO RUN NeEstimator -----
+#A. LOAD VCF
+snpsR = read.vcfR(paste0("vcf/", project_name, "_filtered_neutral_clusters.vcf"), verbose = T)
 
-##5.3. CONVERTING FILES:
-#A. VCF to Genind
+#B. DEFINING POPULATIONS USING THE VCF METAFILE:
+snps_neutral = vcfLink(paste0("vcf/", project_name, "_filtered_neutral_clusters.vcf"), overwriteID=T)
+VCFsummary(snps_neutral) #277 individuals and 5268 SNPs.
+population = as.factor(snps_neutral@meta$POP_ID)
+
+#C. Converting VCF to Genind
 snps_genind = vcfR2genind(snpsR)
 class(snps_genind)
 
-#B. Adding strata (pops) into Genind
+#D. Adding strata (pops) into Genind
 snps_genind@pop = population
 
-#C. Converting Genind to Gtypes
+#E. Converting Genind to Gtypes
 snps_gtypes = genind2gtypes(snps_genind)
 class(snps_gtypes)
 
-#D. Converting Gtypes to GENEPOP to run in NeEstimator and save it:
-genepopWrite(snps_gtypes, "pilocarpus_genepop.txt")
+#F. Converting Gtypes to GENEPOP to run in NeEstimator and save it:
+genepopWrite(snps_gtypes, "Results/Step03/Ne/Genepop_NeEstimator_Neutral")
 
-#E. Load this file in NeEstimator to run Ne analyses.
-
-##END
-
-##END
+##END;
