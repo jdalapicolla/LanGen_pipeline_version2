@@ -693,4 +693,13 @@ class(snps_gtypes)
 #F. Converting Gtypes to GENEPOP to run in NeEstimator and save it:
 genepopWrite(snps_gtypes, "Results/Step03/Ne/Genepop_NeEstimator_Neutral")
 
+
+#G. Running Ne in StrataG. StrataG did not consider missing data.
+Ne = ldNe(snps_gtypes, maf.threshold = 0, by.strata = TRUE, ci = 0.95, drop.missing = TRUE, num.cores = 4)
+Ne
+
+#H. Save the results:
+write.csv(Ne, paste0("Results/Step03/Ne/NeLD_Nomissing_", project_name,  ".csv"))
+
+
 ##END;
