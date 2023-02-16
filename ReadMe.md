@@ -2,10 +2,11 @@
 
 Scripts for Landscape Genomics analyses, version 2.  Scripts originally prepared by Carolina S. Carvalho, Jeronymo Dalapicolla, Luciana C. Resende-Moreira, Jamille C. Veiga, Brenda Forester, and Rodolfo Jaffé.
 
+&nbsp;
 
-This pipeline was designed on *Ubuntu 20.04 LTS*, using *RStudio v1.4.1717* and *R v4.1.0*. It is organized in 4 parts:
+This pipeline was designed on *Ubuntu 20.04 LTS*, using *RStudio v1.4.1717*, *VCFtools v.0.1.16*, and *R v4.1.0*. It is organized in 4 parts:
 
-**PART 1** : [GENETIC STRUCTURE AND GENETIC DIVERSITY](https://github.com/jdalapicolla/LanGen_pipeline_version2)
+**PART 1** : [GENETIC STRUCTURE AND GENETIC DIVERSITY](https://github.com/jdalapicolla/LanGen_pipeline_version2/tree/master/PART1)
 
 **PART 2** : [ISOLATION BY DISTANCE AND FINE-SCALE SPATIAL GENETIC STRUCTURE](https://github.com/jdalapicolla/IBD_models.R)
 
@@ -13,6 +14,11 @@ This pipeline was designed on *Ubuntu 20.04 LTS*, using *RStudio v1.4.1717* and 
 
 **PART 4** : [LOCAL ADAPTATION ANALYSES; IDENTIFICATION OF CANDIDATES LOCI UNDER SELECTION](https://github.com/jdalapicolla/LOCAL_ADAPTATION.R)
 
+&nbsp;
+
+For a similar pipeline without using *VCFtools v.0.1.16*, check our [Populational Genomics Pipeline](https://github.com/jdalapicolla/PopGenPipe)
+
+&nbsp;
 
 
 ## How to cite:
