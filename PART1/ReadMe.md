@@ -2,7 +2,6 @@
 
 This suit of scripts were developed based on [LanGen_pipeline](https://github.com/rojaff/LanGen_pipeline)
 
-&nbsp;
 For a similar pipeline without using *VCFtools v.0.1.16*, check our [Populational Genomics Pipeline](https://github.com/jdalapicolla/PopGenPipe)
 
 &nbsp;
